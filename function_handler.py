@@ -28,14 +28,14 @@ def handler(event, context):
         print("cloudtrail")
         # Run tag_trail function
         result = tag_trail(eventJson["responseElements"],tags)
+    # tag iam Roles and Policies
+    elif eventJson["eventSource"] == "iam.amazonaws.com":
+        print("iam")
+        # Run tag_iam function
+        tag_iam(eventJson["eventName"],eventJson["responseElements"],tags)
     
     # print output
     print(result)
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps('Hello from Lambda!')
-    }
 
 # Tag All EC2 Resources
 def tag_ec2(eventName, responseElements, tags):
@@ -85,11 +85,26 @@ def tag_s3(bucketName, tags):
             'TagSet': tags
             }
     )
-# Tag CreateTrail trail
+
+# Tag CloudTrail trail
 def tag_trail(responseElements, tags):
     cloudtrail = boto3.client('cloudtrail')
+    print(responseElements)
 
     return cloudtrail.add_tags(
         ResourceId = responseElements['trailid'],
         TagsList = tags
     )
+
+# Tag IAM Roles and Policies
+def tag_iam(eventName, responseElements, tags):
+    iam = boto3.client('iam')
+
+    if eventName == 'CreatePolicy':
+        print(responseElements)
+    elif eventName == 'PutRolePolicy':
+        print(responseElements)
+        # return iam.tag_role(
+        #     RoleName = responseElements['trailid'],
+        #     TagsList = tags
+        # )
