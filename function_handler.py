@@ -89,8 +89,8 @@ def tag_s3(bucketName, tags):
 # Tag CloudTrail trail
 def tag_trail(responseElements, tags):
     cloudtrail = boto3.client('cloudtrail')
-    print(responseElements)
 
+    print(responseElements)
     return cloudtrail.add_tags(
         ResourceId = responseElements['trailid'],
         TagsList = tags
@@ -99,12 +99,11 @@ def tag_trail(responseElements, tags):
 # Tag IAM Roles and Policies
 def tag_iam(eventName, responseElements, tags):
     iam = boto3.client('iam')
-
-    if eventName == 'CreatePolicy':
-        print(responseElements)
-    elif eventName == 'PutRolePolicy':
-        print(responseElements)
-        # return iam.tag_role(
-        #     RoleName = responseElements['trailid'],
-        #     TagsList = tags
-        # )
+    
+    print(responseElements)
+    if eventName == 'PutRolePolicy':
+        
+        return iam.tag_role(
+            RoleName = responseElements['trailid'],
+            TagsList = tags
+        )
