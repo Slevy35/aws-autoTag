@@ -65,9 +65,9 @@ def tag_ec2(eventName, responseElements, tags):
     elif eventName == 'CreateSecurityGroup':
         ids.append(responseElements['groupId'])
     elif eventName == 'CreateNetworkAcl':
-        ids.append(responseElements['networkaclid'])
+        ids.append(responseElements['networkAcl']['networkAclId'])
     elif eventName == 'CreateVpc':
-        ids.append(responseElements['vpcid'])
+        ids.append(responseElements['vpc']['vpcId'])
     if ids:
         return ec2.create_tags(
                     Resources=ids,
