@@ -1,0 +1,139 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources" : {
+    "LambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+          "Handler": "main.handler",
+          "Role": {
+              "Fn::GetAtt": [
+                  "LambdaExecutionRole",
+                  "Arn"
+              ]
+          },
+          "Code": {
+              "S3Bucket": "autocleanuplogs",
+              "S3Key": "aws-autotag.zip"
+          },
+          "Runtime": "python3.8"
+      }
+    },
+    "LambdaExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{ "Effect": "Allow", "Principal": {"Service": ["lambda.amazonaws.com"]}, "Action": ["sts:AssumeRole"] }]
+        },
+        "Path": "/service-role/",
+        "Policies": [{
+          "PolicyName": "AllowTagOnly",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                  "Sid": "VisualEditor0",
+                  "Effect": "Allow",
+                  "Action": [
+                      "logs:CreateLogStream",
+                      "logs:TagLogGroup",
+                      "cloudtrail:AddTags",
+                      "s3:PutBucketTagging",
+                      "ec2:CreateTags",
+                      "iam:TagRole",
+                      "logs:CreateLogGroup",
+                      "logs:PutLogEvents"
+                  ],
+                  "Resource": "*"
+                }
+            ]
+          }
+        }]
+      }
+    },
+    "EC2EventRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "EventRule",
+        "EventPattern": {
+          "source": [
+            "aws.ec2"
+          ],
+          "detail-type": [
+            "EC2 Instance State-change Notification"
+          ]
+        },
+        "State": "ENABLED",
+        "Targets": [{
+          "Arn": { "Fn::GetAtt": ["LambdaFunction", "Arn"] },
+          "Id": "EC2EventRule"
+        }]
+      }
+    },
+    "EC2EventRulePermissionToInvokeLambda": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": { "Ref": "LambdaFunction" },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": { "Fn::GetAtt": ["EC2EventRule", "Arn"] }
+      }
+    },
+    "S3EventRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "EventRule",
+        "EventPattern": {
+          "source": [
+            "aws.ec2"
+          ],
+          "detail-type": [
+            "EC2 Instance State-change Notification"
+          ]
+        },
+        "State": "ENABLED",
+        "Targets": [{
+          "Arn": { "Fn::GetAtt": ["LambdaFunction", "Arn"] },
+          "Id": "S3EventRule"
+        }]
+      }
+    },
+    "S3EventRulePermissionToInvokeLambda": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": { "Ref": "LambdaFunction" },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": { "Fn::GetAtt": ["S3EventRule", "Arn"] }
+      }
+    },
+    "IAMEventRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "EventRule",
+        "EventPattern": {
+          "source": [
+            "aws.ec2"
+          ],
+          "detail-type": [
+            "EC2 Instance State-change Notification"
+          ]
+        },
+        "State": "ENABLED",
+        "Targets": [{
+          "Arn": { "Fn::GetAtt": ["LambdaFunction", "Arn"] },
+          "Id": "S3EventRule"
+        }]
+      }
+    },
+    "IAMEventRulePermissionToInvokeLambda": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": { "Ref": "LambdaFunction" },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": { "Fn::GetAtt": ["IAMEventRule", "Arn"] }
+      }
+    }
+  }
+}
