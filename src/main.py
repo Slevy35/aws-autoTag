@@ -10,7 +10,7 @@ def handler(event, context):
         {'Key': 'Owner', 'Value': eventDetails["userIdentity"]["principalId"]},
         {'Key': 'OwnerARN', 'Value': eventDetails["userIdentity"]["arn"]},
         {'Key': 'Region', 'Value': eventDetails["awsRegion"]}
-        ]
+    ]
         
     # tag s3 buckets
     if (eventDetails["eventSource"] == 's3.amazonaws.com' and

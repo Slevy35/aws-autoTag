@@ -1,5 +1,5 @@
 # zip code
-cd src; zip -r ../aws-autotag.zip *; cd ..
+cd src; zip -r ../build/aws-autotag.zip *; cd ..
 
 # upload to s3 bucket
-aws s3 cp aws-autotag.zip s3://autocleanuplogs/
+aws s3 cp build/aws-autotag.zip s3://autocleanuplogs/
