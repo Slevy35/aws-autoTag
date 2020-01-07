@@ -2,15 +2,16 @@ import json
 import boto3
 
 def handler(event, context):
-    #eventJson = json.loads(event)
+
     result = None
     eventJson = json.loads(json.dumps(event))
     print(eventJson)
     tags = [
         {'Key': 'Owner', 'Value': eventJson["userIdentity"]["principalId"]},
         {'Key': 'OwnerARN', 'Value': eventJson["userIdentity"]["arn"]},
-        {'Key': 'awsRegion', 'Value': eventJson["awsRegion"]}
+        {'Key': 'Region', 'Value': eventJson["awsRegion"]}
         ]
+        
     # tag s3 buckets
     if (eventJson["eventSource"] == 's3.amazonaws.com' and
         eventJson["eventName"] == 'CreateBucket'):
@@ -55,18 +56,25 @@ def tag_ec2(eventName, responseElements, tags):
             for eni in instance.network_interfaces:
                 ids.append(eni.id)
     elif eventName == 'CreateVolume':
+        print("CreateVolume")
         ids.append(responseElements['volumeId'])
     elif eventName == 'CreateImage':
+        print("CreateImage")
         ids.append(responseElements['imageId'])
     elif eventName == 'CreateSnapshot':
+        print("CreateSnapshot")
         ids.append(responseElements['snapshotId'])
     elif eventName == 'CreateInternetGateway':
+        print("CreateInternetGateway")
         ids.append(responseElements['internetGateway']['internetGatewayId'])
     elif eventName == 'CreateSecurityGroup':
+        print("CreateSecurityGroup")
         ids.append(responseElements['groupId'])
     elif eventName == 'CreateNetworkAcl':
+        print("CreateNetworkAcl")
         ids.append(responseElements['networkAcl']['networkAclId'])
     elif eventName == 'CreateVpc':
+        print("CreateVpc")
         ids.append(responseElements['vpc']['vpcId'])
     if ids:
         return ec2.create_tags(
@@ -102,6 +110,7 @@ def tag_iam(eventName, responseElements, tags):
     
     print(responseElements)
     if eventName == 'PutRolePolicy':
+        print("PutRolePolicy")
         
         return iam.tag_role(
             RoleName = responseElements['trailid'],
