@@ -4,36 +4,36 @@ import boto3
 def handler(event, context):
 
     result = None
-    eventJson = json.loads(json.dumps(event))
-    print(eventJson)
+    eventDetails = json.loads(json.dumps(event))["detail"]
+    print(eventDetails)
     tags = [
-        {'Key': 'Owner', 'Value': eventJson["userIdentity"]["principalId"]},
-        {'Key': 'OwnerARN', 'Value': eventJson["userIdentity"]["arn"]},
-        {'Key': 'Region', 'Value': eventJson["awsRegion"]}
+        {'Key': 'Owner', 'Value': eventDetails["userIdentity"]["principalId"]},
+        {'Key': 'OwnerARN', 'Value': eventDetails["userIdentity"]["arn"]},
+        {'Key': 'Region', 'Value': eventDetails["awsRegion"]}
         ]
         
     # tag s3 buckets
-    if (eventJson["eventSource"] == 's3.amazonaws.com' and
-        eventJson["eventName"] == 'CreateBucket'):
-        print("s3")
+    if (eventDetails["eventSource"] == 's3.amazonaws.com' and
+        eventDetails["eventName"] == 'CreateBucket'):
+        
         # Run tag_s3 function
-        result = tag_s3(eventJson["requestParameters"]["bucketName"], tags)
+        result = tag_s3(eventDetails["requestParameters"]["bucketName"], tags)
     # tag ec2 instances
-    elif eventJson["eventSource"] == "ec2.amazonaws.com":
-        print("ec2")
+    elif eventDetails["eventSource"] == "ec2.amazonaws.com":
+        
         # Run tag_ec2 function
-        result = tag_ec2(eventJson["eventName"], eventJson["responseElements"],tags)
+        result = tag_ec2(eventDetails["eventName"], eventDetails["responseElements"],tags)
     # tag CreateTrail trails
-    elif (eventJson["eventSource"] == "cloudtrail.amazonaws.com" and
-        eventJson["eventName"] == 'CreateTrail'):
+    elif (eventDetails["eventSource"] == "cloudtrail.amazonaws.com" and
+        eventDetails["eventName"] == 'CreateTrail'):
         print("cloudtrail")
         # Run tag_trail function
-        result = tag_trail(eventJson["responseElements"],tags)
+        result = tag_trail(eventDetails["responseElements"],tags)
     # tag iam Roles and Policies
-    elif eventJson["eventSource"] == "iam.amazonaws.com":
+    elif eventDetails["eventSource"] == "iam.amazonaws.com":
         print("iam")
         # Run tag_iam function
-        result = tag_iam(eventJson["eventName"],eventJson["responseElements"],tags)
+        result = tag_iam(eventDetails["eventName"],eventDetails["responseElements"],tags)
     
     # print output
     print(result)
@@ -56,25 +56,18 @@ def tag_ec2(eventName, responseElements, tags):
             for eni in instance.network_interfaces:
                 ids.append(eni.id)
     elif eventName == 'CreateVolume':
-        print("CreateVolume")
         ids.append(responseElements['volumeId'])
     elif eventName == 'CreateImage':
-        print("CreateImage")
         ids.append(responseElements['imageId'])
     elif eventName == 'CreateSnapshot':
-        print("CreateSnapshot")
         ids.append(responseElements['snapshotId'])
     elif eventName == 'CreateInternetGateway':
-        print("CreateInternetGateway")
         ids.append(responseElements['internetGateway']['internetGatewayId'])
     elif eventName == 'CreateSecurityGroup':
-        print("CreateSecurityGroup")
         ids.append(responseElements['groupId'])
     elif eventName == 'CreateNetworkAcl':
-        print("CreateNetworkAcl")
         ids.append(responseElements['networkAcl']['networkAclId'])
     elif eventName == 'CreateVpc':
-        print("CreateVpc")
         ids.append(responseElements['vpc']['vpcId'])
     if ids:
         return ec2.create_tags(
@@ -109,10 +102,10 @@ def tag_iam(eventName, responseElements, tags):
     iam = boto3.client('iam')
     
     print(responseElements)
-    if eventName == 'PutRolePolicy':
-        print("PutRolePolicy")
+    if eventName == 'CreateRole':
+        print("CreateRole")
         
         return iam.tag_role(
-            RoleName = responseElements['trailid'],
-            TagsList = tags
+            RoleName = responseElements['role']['roleName'],
+            Tags = tags
         )
