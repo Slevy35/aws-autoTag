@@ -12,24 +12,24 @@ def handler(event, context):
         {'Key': 'Region', 'Value': eventDetails["awsRegion"]}
     ]
         
-    # tag s3 buckets
+    # Check if eventSource is s3
     if (eventDetails["eventSource"] == 's3.amazonaws.com' and
         eventDetails["eventName"] == 'CreateBucket'):
         
         # Run tag_s3 function
         result = tag_s3(eventDetails["requestParameters"]["bucketName"], tags)
-    # tag ec2 instances
+    # Check if eventSource is ec2
     elif eventDetails["eventSource"] == "ec2.amazonaws.com":
         
         # Run tag_ec2 function
         result = tag_ec2(eventDetails["eventName"], eventDetails["responseElements"],tags)
-    # tag CreateTrail trails
+    # Check if eventSource is CreateTrail
     elif (eventDetails["eventSource"] == "cloudtrail.amazonaws.com" and
         eventDetails["eventName"] == 'CreateTrail'):
         print("cloudtrail")
         # Run tag_trail function
         result = tag_trail(eventDetails["responseElements"],tags)
-    # tag iam Roles and Policies
+    # Check if eventSource is iam
     elif eventDetails["eventSource"] == "iam.amazonaws.com":
         print("iam")
         # Run tag_iam function
@@ -45,7 +45,7 @@ def handler(event, context):
 
 # Tag All EC2 Resources
 def tag_ec2(eventName, responseElements, tags):
-    ec2 = boto3.resource('ec2')
+    ec2Client = boto3.client('ec2')
     
     ids = []
 
@@ -53,9 +53,12 @@ def tag_ec2(eventName, responseElements, tags):
         #loop through instances"
         for item in responseElements["instancesSet"]["items"]:
             ids.append(item['instanceId'])
-        base = ec2.instances.filter(InstanceIds=ids)
+        #base = ec2Client.instances.filter(InstanceIds=ids)
+        instances = ec2Client.describe_instances(
+            InstanceIds=[ids]
+        )
         #loop through connected resources"
-        for instance in base:
+        for instance in instances:
             for vol in instance.volumes.all():
                 ids.append(vol.id)
             for eni in instance.network_interfaces:
@@ -75,7 +78,7 @@ def tag_ec2(eventName, responseElements, tags):
     elif eventName == 'CreateVpc':
         ids.append(responseElements['vpc']['vpcId'])
     if ids:
-        return ec2.create_tags(
+        return ec2Client.create_tags(
                     Resources=ids,
                     Tags=tags
                 )
@@ -83,9 +86,9 @@ def tag_ec2(eventName, responseElements, tags):
 
 # Tag S3 Bucket
 def tag_s3(bucketName, tags):
-    s3 = boto3.client('s3')
+    s3Client = boto3.client('s3')
 
-    return s3.put_bucket_tagging(
+    return s3Client.put_bucket_tagging(
         Bucket=bucketName,
         Tagging={
             'TagSet': tags
@@ -94,23 +97,23 @@ def tag_s3(bucketName, tags):
 
 # Tag CloudTrail trail
 def tag_trail(responseElements, tags):
-    cloudtrail = boto3.client('cloudtrail')
+    cloudtrailClient = boto3.client('cloudtrail')
 
     print(responseElements)
-    return cloudtrail.add_tags(
+    return cloudtrailClient.add_tags(
         ResourceId = responseElements['trailid'],
         TagsList = tags
     )
 
 # Tag IAM Roles and Policies
 def tag_iam(eventName, responseElements, tags):
-    iam = boto3.client('iam')
+    iamClient = boto3.client('iam')
     
     print(responseElements)
     if eventName == 'CreateRole':
         print("CreateRole")
         
-        return iam.tag_role(
+        return iamClient.tag_role(
             RoleName = responseElements['role']['roleName'],
             Tags = tags
         )
