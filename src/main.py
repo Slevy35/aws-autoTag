@@ -106,8 +106,6 @@ def tag_iam(eventName, requestParameters, tags):
     iamClient = boto3.client('iam')
     
     if eventName == 'CreateRole':
-        print("CreateRole")
-        
         return iamClient.tag_role(
             RoleName = requestParameters['roleName'],
             Tags = tags
