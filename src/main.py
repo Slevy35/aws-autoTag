@@ -7,9 +7,9 @@ def handler(event, context):
     eventDetails = json.loads(json.dumps(event))["detail"]
     print(eventDetails)
     tags = [
-        {'Key': 'Owner', 'Value': eventDetails["userIdentity"]["principalId"]},
-        {'Key': 'OwnerARN', 'Value': eventDetails["userIdentity"]["arn"]},
-        {'Key': 'Region', 'Value': eventDetails["awsRegion"]}
+        {'Key': 'owner', 'Value': eventDetails["userIdentity"]["principalId"]},
+        {'Key': 'ownerARN', 'Value': eventDetails["userIdentity"]["arn"]},
+        {'Key': 'region', 'Value': eventDetails["awsRegion"]}
     ]
 
     if eventDetails["responseElements"] is None:
@@ -100,7 +100,7 @@ def tag_trail(responseElements, tags):
 
     print(responseElements)
     return cloudtrailClient.add_tags(
-        ResourceId = responseElements['trailid'],
+        ResourceId = responseElements['trailARN'],
         TagsList = tags
     )
 
