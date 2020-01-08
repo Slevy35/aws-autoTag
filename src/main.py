@@ -11,35 +11,34 @@ def handler(event, context):
         {'Key': 'OwnerARN', 'Value': eventDetails["userIdentity"]["arn"]},
         {'Key': 'Region', 'Value': eventDetails["awsRegion"]}
     ]
+
+    if eventDetails["responseElements"] is None:
+        result = "responseElements is empty"
+    else:
+        # Check if eventSource is s3
+        if (eventDetails["eventSource"] == 's3.amazonaws.com' and
+            eventDetails["eventName"] == 'CreateBucket'):
+            # Run tag_s3 function
+            result = tag_s3(eventDetails["requestParameters"]["bucketName"], tags)
+        # Check if eventSource is ec2
+        elif eventDetails["eventSource"] == "ec2.amazonaws.com":
+            # Run tag_ec2 function
+            result = tag_ec2(eventDetails["eventName"], eventDetails["responseElements"],tags)
+        # Check if eventSource is CreateTrail
+        elif (eventDetails["eventSource"] == "cloudtrail.amazonaws.com" and
+            eventDetails["eventName"] == 'CreateTrail'):
+            print("cloudtrail")
+            # Run tag_trail function
+            result = tag_trail(eventDetails["responseElements"],tags)
+        # Check if eventSource is iam
+        elif eventDetails["eventSource"] == "iam.amazonaws.com":
+            # Run tag_iam function
+            result = tag_iam(eventDetails["eventName"],eventDetails["requestParameters"],tags)
+        # Check if eventSource is lambda
+        elif eventDetails["eventSource"] == "lambda.amazonaws.com":
+            # Run tag_lambda function
+            result = tag_lambda(eventDetails["eventName"],eventDetails["responseElements"],tags)
         
-    # Check if eventSource is s3
-    if (eventDetails["eventSource"] == 's3.amazonaws.com' and
-        eventDetails["eventName"] == 'CreateBucket'):
-        
-        # Run tag_s3 function
-        result = tag_s3(eventDetails["requestParameters"]["bucketName"], tags)
-    # Check if eventSource is ec2
-    elif eventDetails["eventSource"] == "ec2.amazonaws.com":
-        
-        # Run tag_ec2 function
-        result = tag_ec2(eventDetails["eventName"], eventDetails["responseElements"],tags)
-    # Check if eventSource is CreateTrail
-    elif (eventDetails["eventSource"] == "cloudtrail.amazonaws.com" and
-        eventDetails["eventName"] == 'CreateTrail'):
-        print("cloudtrail")
-        # Run tag_trail function
-        result = tag_trail(eventDetails["responseElements"],tags)
-    # Check if eventSource is iam
-    elif eventDetails["eventSource"] == "iam.amazonaws.com":
-        print("iam")
-        # Run tag_iam function
-        result = tag_iam(eventDetails["eventName"],eventDetails["responseElements"],tags)
-    # Check if eventSource is lambda
-    elif eventDetails["eventSource"] == "lambda.amazonaws.com":
-        print("lambda")
-        # Run tag_lambda function
-        result = tag_lambda(eventDetails["eventName"],eventDetails["responseElements"],tags)
-    
     # print output
     print(result)
 
@@ -106,15 +105,14 @@ def tag_trail(responseElements, tags):
     )
 
 # Tag IAM Roles and Policies
-def tag_iam(eventName, responseElements, tags):
+def tag_iam(eventName, requestParameters, tags):
     iamClient = boto3.client('iam')
     
-    print(responseElements)
     if eventName == 'CreateRole':
         print("CreateRole")
         
         return iamClient.tag_role(
-            RoleName = responseElements['role']['roleName'],
+            RoleName = requestParameters['roleName'],
             Tags = tags
         )
 
@@ -124,7 +122,6 @@ def tag_lambda(eventName, responseElements, tags):
     
     print(responseElements)
     if eventName == 'CreateFunction20150331':
-        print("CreateFunction20150331")
 
         return lambdaClient.tag_resource(
             Resource = responseElements['functionArn'],
