@@ -34,6 +34,11 @@ def handler(event, context):
         print("iam")
         # Run tag_iam function
         result = tag_iam(eventDetails["eventName"],eventDetails["responseElements"],tags)
+    # Check if eventSource is lambda
+    elif eventDetails["eventSource"] == "lambda.amazonaws.com":
+        print("lambda")
+        # Run tag_lambda function
+        result = tag_lambda(eventDetails["eventName"],eventDetails["responseElements"],tags)
     
     # print output
     print(result)
@@ -107,5 +112,18 @@ def tag_iam(eventName, responseElements, tags):
         
         return iam.tag_role(
             RoleName = responseElements['role']['roleName'],
+            Tags = tags
+        )
+
+# Tag Lambda resources
+def tag_lambda(eventName, responseElements, tags):
+    lambdaClient = boto3.client('lambda')
+    
+    print(responseElements)
+    if eventName == 'CreateFunction20150331':
+        print("CreateFunction20150331")
+        
+        return lambdaClient.tag_resource(
+            RoleName = responseElements['functionArn'],
             Tags = tags
         )
