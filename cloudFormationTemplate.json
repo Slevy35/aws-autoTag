@@ -337,7 +337,8 @@
               "Ref": "S3Bucket"
         },
         "IsLogging": true,
-        "IsMultiRegionTrail": true
+        "IsMultiRegionTrail": true,
+        "IncludeGlobalServiceEvents": true
       }
     },
     "LogGroup": {
