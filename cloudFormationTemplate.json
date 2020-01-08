@@ -1,9 +1,21 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters" : {
+    "CodeS3Bucket" : {
+      "Type" : "String",
+      "Description" : "Enter the s3 bucket name that contains the function code"
+    },
+    "CodeS3Key" : {
+      "Type" : "String",
+      "Default" : "aws-autotag.zip",
+      "Description" : "Enter the zip file name of the function code"
+    }
+  },
   "Resources" : {
     "LambdaFunction": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
+          "Description": "Auto tagging function",
           "Handler": "main.handler",
           "Role": {
               "Fn::GetAtt": [
@@ -12,8 +24,8 @@
               ]
           },
           "Code": {
-              "S3Bucket": "autocleanuplogs",
-              "S3Key": "aws-autotag.zip"
+              "S3Bucket": { "Ref" : "CodeS3Bucket" },
+              "S3Key": { "Ref" : "CodeS3Key" }
           },
           "Runtime": "python3.8"
       }
