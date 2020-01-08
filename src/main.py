@@ -125,8 +125,8 @@ def tag_lambda(eventName, responseElements, tags):
     print(responseElements)
     if eventName == 'CreateFunction20150331':
         print("CreateFunction20150331")
-        
+
         return lambdaClient.tag_resource(
-            RoleName = responseElements['functionArn'],
-            Tags = tags
+            Resource = responseElements['functionArn'],
+            Tags = {tag['Key']: tag['Value'] for (tag) in (tags)}
         )
