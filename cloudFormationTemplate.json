@@ -201,6 +201,42 @@
         "Principal": "events.amazonaws.com",
         "SourceArn": { "Fn::GetAtt": ["TrailEventRule", "Arn"] }
       }
+    },
+    "LambdaEventRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "EventRule",
+        "EventPattern": {
+          "source": [
+            "aws.lambda"
+          ],
+          "detail-type": [
+            "AWS API Call via CloudTrail"
+          ],
+          "detail": {
+            "eventSource": [
+              "lambda.amazonaws.com"
+            ],
+            "eventName": [
+              "CreateFunction20150331"
+            ]
+          }
+        },
+        "State": "ENABLED",
+        "Targets": [{
+          "Arn": { "Fn::GetAtt": ["LambdaFunction", "Arn"] },
+          "Id": "S3EventRule"
+        }]
+      }
+    },
+    "LambdaEventRulePermissionToInvokeLambda": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": { "Ref": "LambdaFunction" },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": { "Fn::GetAtt": ["LambdaEventRule", "Arn"] }
+      }
     }
   }
 }
