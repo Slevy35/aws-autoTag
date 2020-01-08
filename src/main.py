@@ -3,7 +3,6 @@ import boto3
 
 def handler(event, context):
 
-    result = None
     eventDetails = json.loads(json.dumps(event))["detail"]
     print(eventDetails)
     tags = [
@@ -27,7 +26,6 @@ def handler(event, context):
         # Check if eventSource is CreateTrail
         elif (eventDetails["eventSource"] == "cloudtrail.amazonaws.com" and
             eventDetails["eventName"] == 'CreateTrail'):
-            print("cloudtrail")
             # Run tag_trail function
             result = tag_trail(eventDetails["responseElements"],tags)
         # Check if eventSource is iam
@@ -98,7 +96,6 @@ def tag_s3(bucketName, tags):
 def tag_trail(responseElements, tags):
     cloudtrailClient = boto3.client('cloudtrail')
 
-    print(responseElements)
     return cloudtrailClient.add_tags(
         ResourceId = responseElements['trailARN'],
         TagsList = tags
