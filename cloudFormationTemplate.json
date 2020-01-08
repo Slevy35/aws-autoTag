@@ -31,23 +31,24 @@
           "PolicyDocument": {
             "Version": "2012-10-17",
             "Statement": [
-              {
-                  "Sid": "VisualEditor0",
-                  "Effect": "Allow",
-                  "Action": [
-                      "logs:CreateLogStream",
-                      "logs:TagLogGroup",
-                      "cloudtrail:AddTags",
-                      "s3:PutBucketTagging",
-                      "ec2:CreateTags",
-                      "iam:TagRole",
-                      "logs:CreateLogGroup",
-                      "logs:PutLogEvents"
-                  ],
-                  "Resource": "*"
+                {
+                    "Sid": "VisualEditor0",
+                    "Effect": "Allow",
+                    "Action": [
+                        "lambda:TagResource",
+                        "logs:CreateLogStream",
+                        "logs:TagLogGroup",
+                        "s3:PutBucketTagging",
+                        "cloudtrail:AddTags",
+                        "ec2:CreateTags",
+                        "iam:TagRole",
+                        "logs:CreateLogGroup",
+                        "logs:PutLogEvents"
+                    ],
+                    "Resource": "*"
                 }
             ]
-          }
+        }
         }]
       }
     },
