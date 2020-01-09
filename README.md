@@ -37,7 +37,7 @@ cd src; zip -r ../aws-autotag.zip *; cd ..
 
 ### Setup
 
-- Create an S3 Bucket
+- Create a temporary S3 Bucket
 - Upload the zip file to the Bucket
 
 ### Deploy
@@ -45,4 +45,4 @@ cd src; zip -r ../aws-autotag.zip *; cd ..
 - Create CloudFormation Stack
 - Upload the template JSON file
 - Insert the Bucket name that you created under Parameters
-- Enjoy!
+- Deploy!
