@@ -37,7 +37,7 @@ cd src; zip -r ../aws-autotag.zip *; cd ..
 
 ### Setup
 
-- Create an S3 Bucket
+- Create a temporary S3 Bucket
 - Upload the zip file to the Bucket
 
 ### Deploy
