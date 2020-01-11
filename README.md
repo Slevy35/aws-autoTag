@@ -5,16 +5,16 @@ This function allow you to automatically tag aws resources
 **Suported resources**
 
 - EC2 Instances
-- EC2 Image
-- EBS Volume
-- EBS Snapshote
-- InternetGateway
-- SecurityGroup
-- VPC
-- S3 Bucket
-- CloudTrail trail
-- IAM Role
-- Lambda Function
+- EC2 Images
+- EBS Volumes
+- EBS Snapshotes
+- Internet Gateways
+- Security Groups
+- VPCs
+- S3 Buckets
+- CloudTrail trails
+- IAM Roles
+- Lambda Functions
 
 ---
 
