@@ -1,0 +1,292 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  CodeS3Bucket:
+    Type: String
+    Description: Enter the s3 bucket name that contains the function code
+  CodeS3Key:
+    Type: String
+    Default: aws-autotag.zip
+    Description: Enter the zip file name of the function code
+Resources:
+  LambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Description: Auto tagging function
+      Handler: main.handler
+      Role: !GetAtt 
+        - LambdaExecutionRole
+        - Arn
+      Code:
+        S3Bucket: !Ref CodeS3Bucket
+        S3Key: !Ref CodeS3Key
+      Runtime: python3.8
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /service-role/
+      Policies:
+        - PolicyName: AllowTagOnly
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: VisualEditor0
+                Effect: Allow
+                Action:
+                  - 'lambda:TagResource'
+                  - 'logs:CreateLogStream'
+                  - 'logs:TagLogGroup'
+                  - 's3:PutBucketTagging'
+                  - 'cloudtrail:AddTags'
+                  - 'ec2:CreateTags'
+                  - 'iam:TagRole'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+  EC2EventRule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Description: EventRule
+      EventPattern:
+        source:
+          - aws.ec2
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventSource:
+            - ec2.amazonaws.com
+          eventName:
+            - RunInstances
+            - CreateVolume
+            - CreateImage
+            - CreateSnapshot
+            - CreateInternetGateway
+            - CreateSecurityGroup
+            - CreateNetworkAcl
+            - CreateVpc
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt 
+            - LambdaFunction
+            - Arn
+          Id: EC2EventRule
+  EC2EventRulePermissionToInvokeLambda:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 
+        - EC2EventRule
+        - Arn
+  S3EventRule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Description: EventRule
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventSource:
+            - s3.amazonaws.com
+          eventName:
+            - CreateBucket
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt 
+            - LambdaFunction
+            - Arn
+          Id: S3EventRule
+  S3EventRulePermissionToInvokeLambda:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 
+        - S3EventRule
+        - Arn
+  IAMEventRule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Description: EventRule
+      EventPattern:
+        source:
+          - aws.iam
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventSource:
+            - iam.amazonaws.com
+          eventName:
+            - CreateRole
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt 
+            - LambdaFunction
+            - Arn
+          Id: S3EventRule
+  IAMEventRulePermissionToInvokeLambda:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 
+        - IAMEventRule
+        - Arn
+  TrailEventRule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Description: EventRule
+      EventPattern:
+        source:
+          - aws.cloudtrail
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventSource:
+            - cloudtrail.amazonaws.com
+          eventName:
+            - CreateTrail
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt 
+            - LambdaFunction
+            - Arn
+          Id: S3EventRule
+  TrailEventRulePermissionToInvokeLambda:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 
+        - TrailEventRule
+        - Arn
+  LambdaEventRule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Description: EventRule
+      EventPattern:
+        source:
+          - aws.lambda
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventSource:
+            - lambda.amazonaws.com
+          eventName:
+            - CreateFunction20150331
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt 
+            - LambdaFunction
+            - Arn
+          Id: S3EventRule
+  LambdaEventRulePermissionToInvokeLambda:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 
+        - LambdaEventRule
+        - Arn
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    DeletionPolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AWSCloudTrailAclCheck
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: 's3:GetBucketAcl'
+            Resource: !Join 
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref S3Bucket
+          - Sid: AWSCloudTrailWrite
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: 's3:PutObject'
+            Resource: !Join 
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref S3Bucket
+                - /AWSLogs/
+                - !Ref 'AWS::AccountId'
+                - /*
+            Condition:
+              StringEquals:
+                's3:x-amz-acl': bucket-owner-full-control
+  CloudTrail:
+    DependsOn:
+      - LogGroup
+      - BucketPolicy
+      - CloudWatchLogsRole
+    Type: 'AWS::CloudTrail::Trail'
+    Properties:
+      CloudWatchLogsLogGroupArn: !GetAtt 
+        - LogGroup
+        - Arn
+      CloudWatchLogsRoleArn: !GetAtt 
+        - CloudWatchLogsRole
+        - Arn
+      S3BucketName: !Ref S3Bucket
+      IsLogging: true
+      IsMultiRegionTrail: true
+      IncludeGlobalServiceEvents: true
+  LogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      RetentionInDays: 7
+  CloudWatchLogsRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /service-role/
+      Policies:
+        - PolicyName: CloudWatchLogsRole
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: AWSCloudTrailCreateLogStream20141101
+                Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                Resource: '*'
+              - Sid: AWSCloudTrailPutLogEvents20141101
+                Effect: Allow
+                Action:
+                  - 'logs:PutLogEvents'
+                Resource: '*'
