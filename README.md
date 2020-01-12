@@ -43,6 +43,6 @@ cd src; zip -r ../aws-autotag.zip *; cd ..
 ### Deploy
 
 - Create CloudFormation Stack
-- Upload the template JSON file
+- Upload the template `YAML` file
 - Insert the Bucket name that you created under Parameters
 - Deploy!
